@@ -24,6 +24,8 @@ class SwarmManager():
       },
       "gpu": {
         "size": 1,
+        "cpu_reservation": 1_000_000_000,
+        "mem_reservation": 1_024_000,
         "generic_resources": {
           "GPU": 3000,
         }
@@ -102,8 +104,14 @@ class SwarmManager():
                 service_name = f'darkswarm-{t}-{uuid.uuid4().hex}'
 
                 rp = docker.types.RestartPolicy(condition='none')
+
+                cpu_reservation = self.types[t].get('cpu_reservation')
+                mem_reservation = self.types[t].get('cpu_reservation')
+                generic_resources = self.types[t].get('cpu_reservation')
                 resources = docker.types.Resources(
-                    generic_resources=self.types[t]['generic_resources'])
+                    cpu_reservation=cpu_reservation,
+                    mem_reservation=mem_reservation,
+                    generic_resources=generic_resources)
 
                 service = self.cli.services.create(
                     name=service_name,
