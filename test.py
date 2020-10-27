@@ -9,10 +9,23 @@ sm = SwarmManager(
         'sakura': 'ssh://sakura',
         'shion': 'ssh://shion',
     },
+    {
+        'general': {
+            'size': 2,
+            'generic_resources': None,
+        },
+        'gpu': {
+            'size': 1,
+            'generic_resources': None,
+        }
+    }
 )
 
-service = sm.get_service(['curl', 'https://icanhazip.com'])
+service = sm.get_service('general', ['curl', 'https://icanhazip.com'])
 
+time.sleep(10)
+
+print('Cleaning up')
 sm.cleanup()
 
 # service.remove()

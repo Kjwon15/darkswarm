@@ -2,9 +2,9 @@ import json
 import time
 import uuid
 
+from collections import defaultdict
 from typing import Dict, List, Optional
 from enum import Enum
-from pprint import pprint
 
 import docker
 
@@ -15,14 +15,29 @@ class Mode(Enum):
 
 
 class SwarmManager():
+    """
+    :arg: types (Dict[str, Options])
+    {
+      "general": {
+        "size": 3,
+        "generic_resources": None,
+      },
+      "gpu": {
+        "size": 1,
+        "generic_resources": {
+          "GPU": 3000,
+        }
+      }
+    }
+    """
 
     def __init__(
             self,
             hosts: Dict[str, str],
+            types: Dict[str, Dict],
             baseimage: Optional[str] = None,
             command: Optional[str] = None,
-            mode: Optional[Mode] = Mode.SWARM,
-            size: Optional[int] = 2):
+            mode: Optional[Mode] = Mode.SWARM):
 
         self.baseimage = baseimage or 'kjwon15/wait'
         self.command = command
@@ -33,19 +48,19 @@ class SwarmManager():
             for hostname, base_url in hosts.items()
         }
         self.mode = mode
-        self.pool = []
-        self.size = size
+        self.pool = defaultdict(list)
+        self.types = types
 
         self._prepare()
 
-    def get_service(self, cmd: List[str]):
+    def get_service(self, t: str, cmd: List[str]):
         while True:
-            service = self.pool.pop(0)
+            service = self.pool[t].pop(0)
             task = service.tasks()[0]
             if task['Status']['State'] != 'running':
                 print(f'skipping {service.id}...')
                 time.sleep(1)
-                self.pool.append(service)
+                self.pool[t].append(service)
                 continue
             break
         containerid = task['Status']['ContainerStatus']['ContainerID']
@@ -65,25 +80,38 @@ class SwarmManager():
             }
         )
 
+        self._prepare_type(t)
+
         return service
 
     def cleanup(self):
 
-        for service in self.pool:
+        for service in (
+                service
+                for services in self.pool.values()
+                for service in services):
             service.remove()
 
     def _prepare(self):
-        for _ in range(self.size - len(self.pool)):
+        for t in self.types.keys():
+            self._prepare_type(t)
+
+    def _prepare_type(self, t):
+        for _ in range(self.types[t]['size'] - len(self.pool[t])):
             if self.mode == Mode.SWARM:
+                service_name = f'darkswarm-{t}-{uuid.uuid4().hex}'
+
                 rp = docker.types.RestartPolicy(condition='none')
-                service_name = f'darkswarm-{uuid.uuid4().hex}'
+                resources = docker.types.Resources(
+                    generic_resources=self.types[t]['generic_resources'])
 
                 service = self.cli.services.create(
                     name=service_name,
                     image=self.baseimage,
                     command=self.command,
                     restart_policy=rp,
+                    resources=resources,
                 )
-                self.pool.append(service)
+                self.pool[t].append(service)
             elif self.mode == Mode.MANUAL:
                 raise NotImplementedError
