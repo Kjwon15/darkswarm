@@ -82,24 +82,42 @@ class SwarmManager():
         cli = self.hosts[hostname]
         container = cli.containers.get(containerid)
 
+        self._exec_container(container, cmd)
+
+        self._prepare_type(t)
+
+        return service
+
+    def get_container(self, t: str, cmd: List[str]):
+        pool = self.pool[t]
+
+        container = pool.pop(0)
+
+        self._exec_container(container, cmd)
+
+        self._prepare_type(t)
+
+        return container
+
+    def cleanup(self):
+        if self.mode == Mode.SWARM:
+            for service in (
+                    service
+                    for services in self.pool.values()
+                    for service in services):
+                service.remove()
+        elif self.mode == Mode.MANUAL:
+            # TODO: remove containers
+            raise NotImplementedError()
+
+    @staticmethod
+    def _exec_container(container, cmd: List[str]):
         container.exec_run(
             cmd='sh -c "echo $cmd > /tmp/cmd.json"',
             environment={
                 'cmd': json.dumps(cmd),
             }
         )
-
-        self._prepare_type(t)
-
-        return service
-
-    def cleanup(self):
-
-        for service in (
-                service
-                for services in self.pool.values()
-                for service in services):
-            service.remove()
 
     def _prepare(self):
         for t in self.types.keys():
