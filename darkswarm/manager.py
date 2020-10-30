@@ -33,6 +33,8 @@ class SwarmManager():
     }
     """
 
+    MAX_RETRY = 20
+
     def __init__(
             self,
             hosts: Dict[str, str],
@@ -56,15 +58,20 @@ class SwarmManager():
         self._prepare()
 
     def get_service(self, t: str, cmd: List[str]):
-        while True:
-            service = self.pool[t].pop(0)
+        pool = self.pool[t]
+        for _ in range(self.MAX_RETRY):
+            service = pool.pop(0)
             task = service.tasks()[0]
             if task['Status']['State'] != 'running':
                 print(f'skipping {service.id}...')
                 time.sleep(1)
-                self.pool[t].append(service)
+                pool.append(service)
                 continue
             break
+        else:
+            # TODO: Make custom exception
+            raise Exception()
+
         containerid = task['Status']['ContainerStatus']['ContainerID']
         nodeid = task['NodeID']
         node = self.cli.nodes.get(nodeid)
