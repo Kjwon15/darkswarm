@@ -21,6 +21,8 @@ class SwarmManager():
       "general": {
         "size": 3,
         "generic_resources": None,
+        "mounts": ["/var/nfs:/nfs"],
+        "constraints": ["node.role==worker"],
       },
       "gpu": {
         "size": 1,
@@ -138,12 +140,17 @@ class SwarmManager():
                     mem_reservation=mem_reservation,
                     generic_resources=generic_resources)
 
+                mounts = self.types[t].get('mounts')
+                constraints = self.types[t].get('constraints')
+
                 service = self.cli.services.create(
                     name=service_name,
                     image=self.baseimage,
                     command=self.command,
                     restart_policy=rp,
                     resources=resources,
+                    mounts=mounts,
+                    constraints=constraints,
                 )
                 self.pool[t].append(service)
             elif self.mode == Mode.MANUAL:
