@@ -133,8 +133,8 @@ class SwarmManager():
                 rp = docker.types.RestartPolicy(condition='none')
 
                 cpu_reservation = self.types[t].get('cpu_reservation')
-                mem_reservation = self.types[t].get('cpu_reservation')
-                generic_resources = self.types[t].get('cpu_reservation')
+                mem_reservation = self.types[t].get('mem_reservation')
+                generic_resources = self.types[t].get('generic_resources')
                 resources = docker.types.Resources(
                     cpu_reservation=cpu_reservation,
                     mem_reservation=mem_reservation,
