@@ -21,7 +21,9 @@ sm = SwarmManager(
     }
 )
 
-service = sm.get_service('general', ['curl', 'https://icanhazip.com'])
+service = sm.get_service('general')
+print(service)
+sm.service_exec(service, ['curl', 'https://icanhazip.com'])
 
 time.sleep(10)
 

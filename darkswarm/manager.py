@@ -59,7 +59,7 @@ class SwarmManager():
 
         self._prepare()
 
-    def get_service(self, t: str, cmd: List[str]):
+    def get_service(self, t: str):
         pool = self.pool[t]
         for _ in range(self.MAX_RETRY):
             service = pool.pop(0)
@@ -74,19 +74,14 @@ class SwarmManager():
             # TODO: Make custom exception
             raise Exception()
 
-        containerid = task['Status']['ContainerStatus']['ContainerID']
-        nodeid = task['NodeID']
-        node = self.cli.nodes.get(nodeid)
-        hostname = node.attrs['Description']['Hostname']
-
-        print(f'Run on {hostname} {containerid}')
-
-        cli = self.hosts[hostname]
-        container = cli.containers.get(containerid)
-
-        self._exec_container(container, cmd)
-
         self._prepare_type(t)
+
+        return service
+
+    def exec_service(self, t: str, cmd: List[str]):
+        service = self.get_service(t)
+
+        self.exec_service(service, cmd)
 
         return service
 
@@ -101,6 +96,21 @@ class SwarmManager():
 
         return container
 
+    def service_exec(self, service, cmd: List[str]):
+        task = service.tasks()[0]
+
+        containerid = task['Status']['ContainerStatus']['ContainerID']
+        nodeid = task['NodeID']
+        node = self.cli.nodes.get(nodeid)
+        hostname = node.attrs['Description']['Hostname']
+
+        print(f'Run on {hostname} {containerid}')
+
+        cli = self.hosts[hostname]
+        container = cli.containers.get(containerid)
+
+        self._container_exec(container, cmd)
+
     def cleanup(self):
         if self.mode == Mode.SWARM:
             for service in (
@@ -113,7 +123,7 @@ class SwarmManager():
             raise NotImplementedError()
 
     @staticmethod
-    def _exec_container(container, cmd: List[str]):
+    def _container_exec(container, cmd: List[str]):
         container.exec_run(
             cmd='sh -c "echo $cmd > /tmp/cmd.json"',
             environment={
