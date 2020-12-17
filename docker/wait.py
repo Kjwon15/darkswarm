@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from os import path
 
@@ -28,6 +29,9 @@ if not path.exists(FNAME):
     observer.join()
 
 print('Got cmd')
+
+# Sleep 1s to reduce race condition
+time.sleep(1)
 
 with open(FNAME) as f:
     cmd = json.load(f)
