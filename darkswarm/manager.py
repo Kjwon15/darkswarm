@@ -81,7 +81,7 @@ class SwarmManager():
     def exec_service(self, t: str, cmd: List[str]):
         service = self.get_service(t)
 
-        self.exec_service(service, cmd)
+        self.service_exec(service, cmd)
 
         return service
 
