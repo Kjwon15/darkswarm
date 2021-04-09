@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "darkswarm"
-version = "0.2.1"
+version = "0.2.2"
 description = "Darkswarm is manual preload service/containers for docker swarm"
 authors = ["Jeong Arm <arm@gurum.cc>"]
 repository = "https://github.com/Kjwon15/darkswarm/"
