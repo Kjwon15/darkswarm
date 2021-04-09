@@ -125,7 +125,7 @@ class SwarmManager():
     @staticmethod
     def _container_exec(container, cmd: List[str]):
         container.exec_run(
-            cmd='sh -c "echo $cmd > /tmp/cmd.json"',
+            cmd='sh -c "echo $cmd > /tmp/cmd.json; echo done > /tmp/cmd.flag"',
             environment={
                 'cmd': json.dumps(cmd),
             }

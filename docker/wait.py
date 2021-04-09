@@ -1,13 +1,13 @@
 import json
 import os
-import time
 
 from os import path
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-FNAME = '/tmp/cmd.json'
+FNAME_CMD = '/tmp/cmd.json'
+FNAME_FLAG = '/tmp/cmd.flag'
 
 
 class CreateEventHandler(FileSystemEventHandler):
@@ -21,19 +21,18 @@ class CreateEventHandler(FileSystemEventHandler):
             self.observer.stop()
 
 
-if not path.exists(FNAME):
+if not path.exists(FNAME_FLAG):
     observer = Observer()
-    event_handler = CreateEventHandler(observer, FNAME)
-    observer.schedule(event_handler, path=path.dirname(FNAME), recursive=False)
+    event_handler = CreateEventHandler(observer, FNAME_FLAG)
+    observer.schedule(
+        event_handler,
+        path=path.dirname(FNAME_FLAG), recursive=False)
     observer.start()
     observer.join()
 
 print('Got cmd')
 
-# Sleep 1s to reduce race condition
-time.sleep(1)
-
-with open(FNAME) as f:
+with open(FNAME_CMD) as f:
     cmd = json.load(f)
     print(cmd)
     os.execvp(cmd[0], cmd)
